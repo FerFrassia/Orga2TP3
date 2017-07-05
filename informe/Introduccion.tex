@@ -1,0 +1,13 @@
+\par{En este trabajo pr\'actico aplicaremos los conceptos de System Programming vistos en las clases pr\'acticas y te\'oricas de la materia. Un sistema operativo funciona como el nexo entre los recursos de hardware y los programas de nivel usuario. Por ejemplo, se encarga de manejar los dispositivos de entrada-salida (I/O) y la memoria del sistema.}
+\par{En este trabajo construiremos un sistema operativo multitarea, con paginaci\'on y en modo protegido de 32 bits. Para correrlo contamos con el programa Bochs, que permite simular una computadora IBM-PC y realizar tareas de debugging.}
+\par{El sistema es un juego con dos jugadores y  cada uno de ellos lanza zombies (tareas) de su lado de la pantalla hacia el otro. Gana el jugador que logre que una mayor cantidad de tareas llegaran al lado opuesto de la pantalla.}
+\par{El TP se divide en un conjunto de ejercicios:}
+\begin{itemize}
+    \item \textbf{Ejercicio 1:} Inicializaci\'on de la GDT y pasaje a modo protegido.
+    \item \textbf{Ejercicio 2:} Completar las entradas de la IDT
+    \item \textbf{Ejercicio 3:} Activar paginaci\'on
+    \item \textbf{Ejercicio 4:} Funciones de mapeo y desmapeo de p\'aginas y funcion de inicializar directorio y tablas de p\'agina de un zombie.
+    \item \textbf{Ejercicio 5:} Manejo de interrupciones de teclado, reloj y de software.
+    \item \textbf{Ejercicio 6:} Inicializaci\'on de tss de las tareas y de sus descriptores en la GDT.
+    \item \textbf{Ejercicio 7:} Implementaci\'on del scheduler, de la syscall moverse y del modo debug.
+\end{itemize}

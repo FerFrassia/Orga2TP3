@@ -1,0 +1,88 @@
+\subsection*{Inicializaci\'on de descriptores de TSS en la GDT}
+\par{Para inicializar los Task State Segment (TSS) debemos agregar sus descriptores a la GDT. La mayor\'ia de las variables del descriptor de TSS (gdt_entry) son iguales para todas las TSS:}
+
+\begin{lstlisting} [caption={Descriptor de TSS (gdt_entry)},label=idtEntry]
+gdt[GDT_IDX_TAREA] = (gdt_entry) {
+        (unsigned short)    0x0068,         /* limit[0:15]  */
+        (unsigned short)    0x0000,         /* base[0:15]   */
+        (unsigned char)     0x00,           /* base[16:23]  */
+        (unsigned char)     0x09,           /* type         */
+        (unsigned char)     0x00,           /* s            */
+        (unsigned char)     0x00,           /* dpl          */
+        (unsigned char)     0x00,           /* p            */
+        (unsigned char)     0x00,           /* limit[16:19] */
+        (unsigned char)     0x00,           /* avl          */
+        (unsigned char)     0x00,           /* l            */
+        (unsigned char)     0x00,           /* db           */
+        (unsigned char)     0x00,           /* g            */
+        (unsigned char)     0x00,           /* base[24:31]  */
+    }
+\end{lstlisting}
+
+\par{A diferencia de las tareas-zombie, la Idle y la inicial comienzan con el bit de presente en 1. Por otro lado, la base de la tss se setea en el momento de inicializar cada tarea, cuando conocemos su posicion en memoria.}
+\subsection*{Inicializaci\'on de TSSs}
+\par{Para representar a las tss, contamos con el siguiente struct:}
+
+\begin{lstlisting} [caption={Descriptor de TSS (gdt_entry)},label=idtEntry]
+typedef struct str_tss {
+    unsigned short  ptl;            unsigned short  unused0;
+    unsigned int    esp0;
+    unsigned short  ss0;            unsigned short  unused1;
+    unsigned int    esp1;
+    unsigned short  ss1;            unsigned short  unused2;
+    unsigned int    esp2;
+    unsigned short  ss2;            unsigned short  unused3;
+    unsigned int    cr3;
+    unsigned int    eip;
+    unsigned int    eflags;
+    unsigned int    eax;
+    unsigned int    ecx;
+    unsigned int    edx;
+    unsigned int    ebx;
+    unsigned int    esp;
+    unsigned int    ebp;
+    unsigned int    esi;
+    unsigned int    edi;
+    unsigned short  es;             unsigned short  unused4;
+    unsigned short  cs;             unsigned short  unused5;
+    unsigned short  ss;             unsigned short  unused6;
+    unsigned short  ds;             unsigned short  unused7;
+    unsigned short  fs;             unsigned short  unused8;
+    unsigned short  gs;             unsigned short  unused9;
+    unsigned short  ldt;            unsigned short  unused10;
+    unsigned short  dtrap;          unsigned short  iomap;
+} __attribute__((__packed__, aligned (8))) tss;
+\end{lstlisting}
+
+\par{En el caso de la tss de la tarea inicial no es necesario setear ninguna variable, solo se usa para guardar el contexto al saltar a la Idle y nunca se vuelve. Para la tss de la Idle las variables se setean de acuerdo a la consigna del tp.}
+\par{Por otro lado, contamos con la funci\'on tss_inicializar_zombie que se encarga inicializar una tarea lanzada por un jugador. Primeramente, busca un slot libre en el arreglo gdt_indexes_tasks en la estructura info_jugador (explicada de el ejercicio 7). Con \'indice del slot libre accedemos a su descriptor de segmento en la gdt para setear el bit de presente en 1 y su base a que apunte a donde esta la tss. Posteriormente inicializamos el directorio de p\'agina de la tarea y pedimos una p\'agina libre para usarla como stack de nivel 0. Por \'ultimo seteamos las variables de la tss:}
+
+\begin{lstlisting} [caption={Descriptor de TSS (gdt_entry)},label=idtEntry]
+unsigned int dir_z = mmu_inicializar_dir_zombi(x, y, z);
+unsigned int ss = mmu_proxima_pagina_fisica_libre();
+tss_zombi->esp0 = ss + PAGE_SIZE;
+tss_zombi->ss0 = GDT_IDX_DAT_KERNEL<<3;
+tss_zombi->cr3 = dir_z;
+tss_zombi->eip = VIRTUAL_COD_ZOMBIE_1;
+tss_zombi->eflags = 0x202;
+tss_zombi->cs = GDT_IDX_COD_USER << 3 | 0x3;
+tss_zombi->es = GDT_IDX_DAT_USER << 3 | 0x3;
+tss_zombi->ss = GDT_IDX_DAT_USER << 3 | 0x3;
+tss_zombi->ds = GDT_IDX_DAT_USER << 3 | 0x3;
+tss_zombi->fs = GDT_IDX_DAT_USER << 3 | 0x3;
+tss_zombi->gs = GDT_IDX_DAT_USER << 3 | 0x3;
+tss_zombi->esp = VIRTUAL_COD_ZOMBIE_1 + PAGE_SIZE;
+tss_zombi->ebp = VIRTUAL_COD_ZOMBIE_1 + PAGE_SIZE;
+\end{lstlisting}
+
+\subsection*{Carga de  tarea inicial y salto a la Idle}
+\par{Para cargar la tarea inicial tenemos que setear el task register:}
+\begin{lstlisting} []
+mov ax, 0x0D<<3
+ltr ax
+\end{lstlisting}
+\par{Posteriormente, para pasar a la tarea Idle simplemente hacemos:}
+\begin{lstlisting} []
+jmp 0x70:0xFAFAFA
+\end{lstlisting}
+\par{Donde 0x70 es el selector de segmento de la tarea.}

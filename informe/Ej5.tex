@@ -1,0 +1,70 @@
+\subsubsection*{Asociamos las rutinas de interrupcion a la de reloj, teclado y syscall}
+\par{Para inicializar las interrupciones de teclado y reloj utilizamos la misma macro nombrada en el Ejercicio2, llamada IDT\_ENTRY\_SYSTEM. Para inicializar la entrada de la syscall creamos una macro parecida a la IDT\_ENTRY\_SYSTEM pero con distintos atributos. A esta la llamaremos IDT\_ENTRY\_USER y la describimos de la siguiente manera:}
+
+\begin{lstlisting} [caption={Macro IDT\_ENTRY\_USER}],label=idtDesc] 
+#define IDT_ENTRY_USER(numero)                                         
+    idt[numero].offset_0_15 = (unsigned short) ((unsigned int)(&_isr ## numero) & (unsigned int) 0xFFFF); 
+    idt[numero].segsel = (unsigned short) 0x0040;
+    idt[numero].attr = (unsigned short) 0xEE00;
+    idt[numero].offset_16_31 = (unsigned short) ((unsigned int)(&_isr ## numero) >> 16 & (unsigned int) 0xFFFF);
+\end{lstlisting}
+
+
+\\
+\subsubsection*{Rutina atenci\'on de clock}
+\par{Creamos la rutina de atenci\'on de clock, en esta llamamos a pr\'oximo reloj que se encarg\'a de avanzar el dibujo del clock y luego avisamos al PIC que la interrupci\'on fue atendida mediante call fin\_intr\_pic1. Luego ser\'a modificada para el uso del scheduler.}
+\begin{lstlisting} [caption={Rutina atenci\'on clock}],label=idtDesc] 
+_isr32:
+    pushad
+    call proximo_reloj
+    call fin_intr_pic1
+    popad
+    iret
+
+\end{lstlisting}
+
+\subsubsection*{Rutina de atenci\'on de teclado}
+\par{Creamos la rutina de atenci\'on de teclado. Esta rutina toma el valor de la tecla presionada y compara este valor con los de las teclas correspondientes al juego. Luego hace un jump a el c\'odigo de esa tecla en particular. A continuaci\'on un ejemplo de la tecla $a$:}
+
+\begin{lstlisting} [caption={Rutina atenci\'on teclado}],label=idtDesc] 
+_isr33:
+    pushad
+    xor eax, eax
+    in al, 0x60
+    
+    cmp al, 0x1e
+    je .a
+
+.a: ; A hacia izq
+    mov ebx, -1
+    push ebx
+    mov ebx, 0
+    push ebx
+    call game_change_zombie
+    add esp, 8
+    jmp .fin
+
+
+    .fin:
+        call fin_intr_pic1
+        popad
+        iret
+\end{lstlisting}
+
+\\
+\par{El c\'odigo real es m\'as largo, contiene comparaciones y etiquetas para todas las teclas que son parte del juego.}
+
+\subsubsection*{Rutina atenci\'on syscall}
+\par{La siguiente es la rutina de atenci\'on de la interrupci\'on 0x66, este es el c\'odigo ya modificado para atender la syscall. Luego de mover al zombie hacemos un salto a la tarea idle.}
+\begin{lstlisting} [caption={Rutina atenci\'on de  syscall}],label=idtDesc] 
+_isr102:
+    pushad
+    push eax
+    call game_move_current_zombi
+    pop eax
+    ;jump a la tarea idle
+    jmp 0x70:0xFAFAFA    
+    popad
+    iret
+
+\end{lstlisting}

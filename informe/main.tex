@@ -1,0 +1,110 @@
+\documentclass[a4paper]{article}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{charter}   % tipografia
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{textcomp}
+
+\input{codesnippet}
+\input{page.layout}
+\usepackage{underscore}
+\usepackage{caratula}
+\usepackage{url}
+\usepackage{float}
+
+
+\usepackage{listings}
+
+
+\renewcommand{\lstlistingname}{C\'odigo}
+\lstloadlanguages{[ANSI]C} 
+\lstset{language=[ANSI]C,
+        frame=single,
+        breaklines=true, 			% Saltar de linea si supero el maximo
+        basicstyle=\small\ttfamily,
+        keywordstyle=[1]\color{Blue}\bf,	% Color de las funciones de assembler
+        keywordstyle=[2]\color{Purple},		% Color de parámetros especiales (registros, etc)
+        identifierstyle=,                               
+        commentstyle=\usefont{T1}{pcr}{m}{sl}\color{DarkGreen}\small,
+        stringstyle=\color{Purple},     	% Strings purpuras
+        showstringspaces=false,
+        tabsize=4,
+        %
+        % Instrucciones no incluidas en el paquete Assembler
+        morekeywords={global, define, section, .rodata, .text, jl, movd, movdqu, mulss, subss, addss, cmpss, pand, cvtss2si, cvttss2si, cvtsi2ss},
+        %
+        % Registros y esas otras cosas especiales que no son instrucciones
+        morekeywords=[2]{rax,rdx,rcx,rbx,rsi,rdi,rsp,rbp,r8,r9,r10,r11,r12,r13,r14,r15,xmm0,xmm1,xmm2,xmm3,xmm4,xmm5,xmm6,xmm7
+        		xmm8,xmm9,xmm10,xmm11,xmm12,xmm13,xmm14,xmm15,r8b, r9b, r10b, r11b, r8d, r9d, r10d, r11d},
+       	%
+        morecomment=[l][\color{Blue}]{...}, % Line continuation (...) like blue comment
+        numbers=left, % Numeros de linea en la izquiera
+        firstnumber=0, % Se arranca en la linea 1
+        numberstyle=\tiny\color{Blue}, % Numeros de linea en azul y chicos
+        stepnumber=0 % Los numerros de linea se muestran cada 5
+}
+
+\begin{document}
+
+\thispagestyle{empty}
+\materia{Organización del Computador II}
+\submateria{Primer Cuatrimestre de 2017}
+\titulo{Trabajo Práctico 3}
+\subtitulo{System Programming - Zombi Defense}
+\grupo{Grupo: Guiso and RT NaN JE fun}
+\integrante{Juan Lanuza}{770/15}{juan.lanuza3@gmail.com}
+\integrante{Agustin Penas}{668/14}{agustinpenas@gmail.com}
+\integrante{Fernando Frassia}{340/13}{ferfrassia@gmail.com}
+
+\maketitle
+\newpage
+
+\thispagestyle{empty}
+\vfill
+
+\thispagestyle{empty}
+\vspace{3cm}
+\tableofcontents
+\newpage
+
+%\normalsize
+\newpage
+\section*{Introducción}
+\input{Introduccion}
+
+\newpage
+\section{Ejercicio 1}
+	\input{Ej1}
+
+\newpage
+\section{Ejercicio 2}
+	\input{Ej2}
+
+\newpage
+\section{Ejercicio 3}
+	\input{Ej3}
+
+\newpage
+\section{Ejercicio 4}
+	\input{Ej4}
+
+\newpage
+\section{Ejercicio 5}
+	\input{Ej5}
+
+\newpage
+\section{Ejercicio 6}
+	\input{Ej6}
+    
+\newpage
+\section{Ejercicio 7}
+	\input{Ej7}
+
+\newpage
+\section{Conclusiones}
+	\input{Conclusiones}
+
+\end{document}
+

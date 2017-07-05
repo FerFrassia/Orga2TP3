@@ -1,0 +1,96 @@
+\subsubsection*{Inicializar directorio y tablas de p\'agina para el Kernel}
+\par{Antes de activar paginaci\'on debemos inicializar el directorio y tablas de pagina del kernel.
+Esto lo haremos con identity mapping de las direcciones 0x00000000 a 0x003FFFFF. El directorio de paginas se posicionar\'a en la direcci\'on 0x27000.}
+
+\par{Para representar al directorio utilizamos un struct llamado $page\_directory\_entry$ y para las tablas utilizamos al struct $page\_table\_entry$. A continuaci\'on las definiciones de estos structs:}
+
+\begin{lstlisting} [caption={Estructura de page\_directory\_entry}],label=idtDesc] 
+typedef struct str_page_directory_entry {
+    unsigned char   p:1;
+    unsigned char   rw:1;
+    unsigned char   s:1;
+    unsigned char   pwt:1;
+    unsigned char   pcd:1;
+    unsigned char   a:1;
+    unsigned char   i:1;
+    unsigned char   ps:1;
+    unsigned char   g:1;
+    unsigned char   disp:3;
+    unsigned int    base:20;
+} __attribute__((__packed__, aligned (4))) page_directory_entry;
+
+\end{lstlisting}
+
+\begin{lstlisting} [caption={Estructura de page\_table\_entry}],label=idtDesc] 
+typedef struct str_page_table_entry {
+    unsigned char   p:1;
+    unsigned char   rw:1;
+    unsigned char   s:1;
+    unsigned char   pwt:1;
+    unsigned char   pcd:1;
+    unsigned char   a:1;
+    unsigned char   d:1;
+    unsigned char   pat:1;
+    unsigned char   g:1;
+    unsigned char   disp:3;
+    unsigned int    base:20;
+} __attribute__((__packed__, aligned (4))) page_table_entry;
+
+
+\end{lstlisting}
+
+
+\newpage
+\par{Para inicializar ambas creamos un puntero a $page\_directory\_entry$ y lo seteamos en 0x27000; luego un puntero a $page\_table\_entry$ y lo inicializamos en 0x28000.}
+
+\begin{lstlisting} [caption={Inicializaci\'on de los punteros}],label=idtDesc] 
+	page_directory_entry* dir_pagina_kernel = (page_directory_entry*) CR3KERNEL;
+	page_table_entry* dir_table_kernel = (page_table_entry*) 0x28000;
+\end{lstlisting}
+\par{Luego inicializamos el directorio con los siguientes parametros:}
+
+\begin{lstlisting} [caption={Inicializaci\'on del directorio}],label=idtDesc] 
+	dir_pagina_kernel->p = 1;
+	dir_pagina_kernel->rw = 1;
+	dir_pagina_kernel->s = 0;
+	dir_pagina_kernel->pwt = 0;
+	dir_pagina_kernel->pcd = 0;
+	dir_pagina_kernel->a = 0;
+	dir_pagina_kernel->i = 0;
+	dir_pagina_kernel->ps = 0;
+	dir_pagina_kernel->g = 0;
+	dir_pagina_kernel->disp = 0;
+	dir_pagina_kernel->base = 0x28;
+\end{lstlisting}
+
+
+\\
+\par{Como el Kernel ocupar\'a el primer MB, tendremos 1024 tablas (1024 x 4kb) y cada una de ellas la inicializaremos de la siguiente manera:}
+\begin{lstlisting} [caption={Inicializaci\'on de las tablas}],label=idtDesc] 
+	dir_table_kernel[i].p = 1;
+	dir_table_kernel[i].rw = 1;
+	dir_table_kernel[i].s = 0;
+	dir_table_kernel[i].pwt = 0;
+	dir_table_kernel[i].pcd = 0;
+	dir_table_kernel[i].a = 0;
+	dir_table_kernel[i].d = 0;
+	dir_table_kernel[i].pat = 0;
+	dir_table_kernel[i].g = 0;
+	dir_table_kernel[i].disp = 0;
+	dir_table_kernel[i].base = i;
+\end{lstlisting}
+
+
+\\
+\subsubsection*{Activar paginaci\'on}
+\par{Una vez que tenemos inicializado el mapeo del Kernel podemos pasar a activar paginaci\'on. Para esto debemos activar el bit de PG del registro CR0:}
+
+\begin{lstlisting} [caption={Inicializaci\'on de las tablas}],label=idtDesc] 
+    mov eax , cr0
+    or eax , 0 x80000000
+    mov cr0 , eax
+\end{lstlisting}
+
+\subsubsection*{Limpiar buffer de video}
+\par{La limpieza del buffer de video y el dibujo del mapa fue hecho utilizando las funciones de print brindadas por la catedra. Estas funciones se encargan de escribir en la memoria del video el string, o n\'umero,  pasado por parametro.}
+

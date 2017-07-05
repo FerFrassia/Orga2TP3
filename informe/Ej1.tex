@@ -1,0 +1,81 @@
+\subsubsection*{Inicializaci\'on de la GDT}
+\par{Inicializamos la Tabla de Descriptores Globales con entradas para segmentos de codigo de nivel 0 y 3, otras para segmentos de datos de nivel 0 y 3 y una para un segmento que describe el area de la pantalla de video. Los segmentos de datos y c\'odigos estan organizados de tal forma que se superpongan direccionando los primeros 623MB de memoria (Sistema FLAT), utilizando bloques de 4K al setear el bit de granularidad en 1.}
+\par{A continuaci\'on explicamos c\'omo completamos cada uno de los campo de las entradas de la gdt:}
+\begin{itemize}
+    \item \textbf{Base y limite} Como mencionamos anteriormente, los segmentos de codigo y datos est\'an superpuestos. Comienzan en la direccion base 0x00000000. El valor del l\'imite 0x26348 corresponde la cantidad de bloques de 4k, este valor nos da los 623 MB que queremos.
+    \item \textbf{Tipo:}  El tipo para los segmentos de codigo es 0x08 (executable), mientras que para los de datos y video es 0x02 (readable, writable).
+    \item \textbf{Sistema:}  El bit de system esta seteado en 1 salvo en los segmentos correspondientes a las tss de las tareas, donde esta activo bajo en 0 pues son potestad exclusiva del sistema operativo (veremos las tss mas adelante).
+    \item \textbf{DPL:}   Los segmentos de datos y codigo de nivel kernel tienen DPL en 0x00, al igual que los segmentos de sistema y el de video, mientras que los de codigo y datos nivel usuario tienen DPL en 0x03.    
+    \item \textbf{Granularidad:} El bit de G esta activo s\'olo en los segmentos de datos y c\'odigo ya que es necesario para tener segmentos del tamaño indicado en la consigna.
+    \item \textbf{P, L, D/B, AVL::}  Seteados en 1, 0, 1 y 0 respectivamente para todas las entradas.
+\end{itemize}
+
+\par{Para representar a la GDT tenemos un arreglo de gdt\_entry, donde gdt\_entry es la siguiente estructura:}
+
+\begin{lstlisting} [caption={Estructura de gdt\_entry},label=idtEntry]
+typedef struct str_gdt_entry {
+    unsigned short  limit_0_15;
+    unsigned short  base_0_15;
+    unsigned char   base_23_16;
+    unsigned char   type:4;
+    unsigned char   s:1;
+    unsigned char   dpl:2;
+    unsigned char   p:1;
+    unsigned char   limit_16_19:4;
+    unsigned char   avl:1;
+    unsigned char   l:1;
+    unsigned char   db:1;
+    unsigned char   g:1;
+    unsigned char   base_31_24;
+} __attribute__((__packed__, aligned (8))) gdt_entry;
+\end{lstlisting}
+
+\\
+\subsubsection*{Pasaje a modo protegido}
+
+\par{Para pasar a modo protegido completamos y cargamos la GDT con la instrucci\'on lgdt, que toma el descriptor de la GDT dado por el siguiente struct:}
+
+\begin{lstlisting} [caption={Estructura de gdt\_descriptor},label=idtEntry]
+typedef struct str_gdt_descriptor {
+    unsigned short  gdt_length;
+    unsigned int    gdt_addr;
+} __attribute__((__packed__)) gdt_descriptor;
+
+\end{lstlisting}
+
+\\
+\par{Luego habilitamos A20 para tener acceso a direcciones superiores a $2^{20}$, seteamos el bit PE de CR0 y saltamos a 0x40:mp. 0x40 es el selector de segmento de c\'odigo de nivel 0.}
+
+\begin{lstlisting}[caption={Bloque para saltar a modo protegido},label=idtEntry]
+    ; Habilitar A20
+    call habilitar_A20
+    
+    ; Cargar la GDT
+    lgdt [GDT_DESC]
+    ; Setear el bit PE del registro CR0
+    MOV eax,cr0 
+    OR eax,1 
+    MOV cr0,eax
+    ; Saltar a modo protegido
+    jmp 0x40:mp
+\end{lstlisting}
+
+\\
+\par{Luego procedemos a setear los selectores de segmentos de datos de nivel 0 (indice 9 de la gdt seguido de 3 0 correspondientes a TI y RPL). Luego el selector de segmentos fs (indice 12). Por ultimo establecemos la pila en 0x27000.}
+\begin{lstlisting}[caption={Bloque para setear los selectores de segmento},label=idtEntry]
+    mp:
+        xor eax, eax
+        mov ax, 0x48 ;1001000b
+        mov ds, ax
+        mov es, ax
+        mov gs, ax
+        mov ss, ax  
+        mov ax, 1100000b
+        mov fs, ax
+
+    ; Establecer la base de la pila
+        mov esp, 0x27000
+\end{lstlisting}
+
+
+
